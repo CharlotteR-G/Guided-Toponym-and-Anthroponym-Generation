@@ -13,6 +13,8 @@ args = parser.parse_args()
 # make output directory
 os.makedirs(args.output, exist_ok=True)
 
+tags = set()
+
 def wikidata(filename):
 	with bz2.open(filename, mode="rt") as f:
 		f.read(2) # skip first two bytes: "[\n"
@@ -83,6 +85,41 @@ for row, record in enumerate(wikidata(args.source)):
 
 			native_name = [i["mainsnak"]["datavalue"]["value"] for i in record["claims"]["P1559"] if i["mainsnak"]["snaktype"] == "value"] if "P1559" in record["claims"] else []
 
+			# if native_name missing, use native language and tags to find native_name
+
+			# if not native_name and len(native_language) != 0:
+			# 	if native_language[0] in IDS.IETF_lookup:
+			# 		tag = IDS.IETF_lookup[native_language[0]]
+			# 		name = record["labels"][tag] if tag in record["labels"] else next(iter(record["labels"].values()), None)
+			# 		native_name = [{"text": name["value"], "language": name["language"]}]
+			# 		print("\nchange", native_name, "\n", tag)
+			# 	else:
+			# 		print("no translation")
+			# else:
+			# 	if native_name:
+			# 		print("no change", native_name)
+			
+			# for each native language
+			#	find the equivalent IETF tag
+
+			# 	language_name = ""
+			# 	for i in IDS.specific_language_ids:
+			# 		if list(i.keys())[0] == native_language[0]:
+			# 			language_name = i[native_language[0]]
+			# 			for i in IDS.IETF_translation:
+			# 				if language_name in i["English"]:
+			# 					native_language_tag = i["alpha2"]
+			# 					# start work on autoencoder whilst this runs
+			# 					name = record["labels"][native_language_tag] if native_language_tag in record["labels"] else next(iter(record["labels"].values()), None)
+			# 					native_name = [{"text": name["value"], "language": name["language"]}]
+			# 					# print("\n", native_name, "\n")
+			# 					break
+			# 			break
+			# else:
+			# 	if native_name:
+			# 		print(native_name)
+
+
 			birth_name = [i["mainsnak"]["datavalue"]["value"] for i in record["claims"]["P1477"] if i["mainsnak"]["snaktype"] == "value"] if "P1477" in record["claims"] else []
 
 			given_names = [i["mainsnak"]["datavalue"]["value"]["id"] for i in record["claims"]["P735"] if i["mainsnak"]["snaktype"] == "value"] if "P735" in record["claims"] else []
@@ -91,7 +128,6 @@ for row, record in enumerate(wikidata(args.source)):
 			pseudonyms = [i["mainsnak"]["datavalue"]["value"] for i in record["claims"]["P742"] if i["mainsnak"]["snaktype"] == "value"] if "P742" in record["claims"] else []
 
 			professions = [i["mainsnak"]["datavalue"]["value"]["id"] for i in record["claims"]["P106"] if i["mainsnak"]["snaktype"] == "value"] if "P106" in record["claims"] else []
-
 
 			people.write({
 				"id": record["id"],
@@ -114,6 +150,7 @@ for row, record in enumerate(wikidata(args.source)):
 			})
 
 		# form collection of names
+
 		elif any((i in IDS.given_name_ids) for i in instance_of):
 
 			label = record["labels"]["en"] if "en" in record["labels"] else next(iter(record["labels"].values()),None)
@@ -132,12 +169,15 @@ for row, record in enumerate(wikidata(args.source)):
 			other_forms = [i["mainsnak"]["datavalue"]["value"]["id"] for i in record["claims"]["P460"] if i["mainsnak"]["snaktype"] == "value"] if "P460" in record["claims"] else []
 			other_gender = [i["mainsnak"]["datavalue"]["value"]["id"] for i in record["claims"]["P1560"] if i["mainsnak"]["snaktype"] == "value"] if "P1560" in record["claims"] else []
 
+			# ALREADY COMMENTED ---------------------------------
 			#nickname_ids = [
 			#		j["datavalue"]["value"]["id"]
 			#		for i in record["claims"]["P1449"]
 			#		for j in i.get("qualifiers",{}).get("P805",[])
 			#		if i["mainsnak"]["snaktype"] == "value" and j["snaktype"] == "value"] if "P1449" in record["claims"] else []
 			#nickname_text = [i["mainsnak"]["datavalue"]["value"] for i in record["claims"]["P1449"] if i["mainsnak"]["snaktype"] == "value"] if "P1449" in record["claims"] else []
+
+			# ------------------------------------------------------------
 
 			nicknames = [
 					(
@@ -172,6 +212,11 @@ for row, record in enumerate(wikidata(args.source)):
 			writing_system = [i["mainsnak"]["datavalue"]["value"]["id"] for i in record["claims"]["P282"] if i["mainsnak"]["snaktype"] == "value"] if "P282" in record["claims"] else []
 			influenced_by = [i["mainsnak"]["datavalue"]["value"]["id"] for i in record["claims"]["P737"] if i["mainsnak"]["snaktype"] == "value"] if "P737" in record["claims"] else []
 
+			iso_639_2 = [i["mainsnak"]["datavalue"]["value"] for i in record["claims"]["P219"] if i["mainsnak"]["snaktype"] == "value"] if "P219" in record["claims"] else []
+			iso_639_3 = [i["mainsnak"]["datavalue"]["value"] for i in record["claims"]["P220"] if i["mainsnak"]["snaktype"] == "value"] if "P220" in record["claims"] else []
+			iso_639_6 = [i["mainsnak"]["datavalue"]["value"] for i in record["claims"]["P221"] if i["mainsnak"]["snaktype"] == "value"] if "P221" in record["claims"] else []
+			ietf = [i["mainsnak"]["datavalue"]["value"] for i in record["claims"]["P305"] if i["mainsnak"]["snaktype"] == "value"] if "P305" in record["claims"] else []
+
 			languages.write({
 				"id": record["id"],
 				"label": label,
@@ -179,7 +224,11 @@ for row, record in enumerate(wikidata(args.source)):
 				"subclass_of": subclass_of,
 				"native_label": native_label,
 				"writing_system": writing_system,
-				"influenced_by": influenced_by
+				"influenced_by": influenced_by,
+				"iso_639_2": iso_639_2,
+				"iso_639_3": iso_639_3,
+				"iso_639_6": iso_639_6,
+				"ietf": ietf,
 			})
 
 		elif any((i in IDS.country_ids) for i in instance_of):
@@ -200,7 +249,7 @@ for row, record in enumerate(wikidata(args.source)):
 				"official_name": official_name,
 				"native_label": native_label,
 				"official_language": official_language,
-				"languages_used": languages_used
+				"languages_used": languages_used,
 			})
 
 		elif "P17" in record["claims"] and "P625" in record["claims"]: # Must have a listed country and geographic coordinate
