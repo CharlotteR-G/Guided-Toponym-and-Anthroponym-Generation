@@ -1,3 +1,5 @@
 venv
 ./DataGathering/latest-all.json.bz2
+./DataGathering/notes.txt
 testvenv
+./Tests
