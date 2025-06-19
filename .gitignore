@@ -2,6 +2,6 @@ venv
 ./DataGathering/latest-all.json.bz2
 ./DataGathering/notes.txt
 testvenv
-./Tests
-./DataGathering/CoarseWikidata
-./DataGathering/Data
+./Tests/
+./DataGathering/CoarseWikidata/
+./DataGathering/Data/
