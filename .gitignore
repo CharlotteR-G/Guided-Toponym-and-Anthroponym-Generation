@@ -3,3 +3,5 @@ venv
 ./DataGathering/notes.txt
 testvenv
 ./Tests
+./DataGathering/CoarseWikidata
+./DataGathering/Data
